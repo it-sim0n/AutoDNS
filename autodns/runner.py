@@ -42,18 +42,16 @@ def resolve(domain, sublist, dynamic=False):
     return proc, msg, None
 
 
-def bruteforce(domain, wordlist):
-    resolvers = create_resolvers_file()
+def bruteforce(domain, wordlist, resolvers, outfile):
+    p = run([
+        "puredns", "bruteforce",
+        wordlist, domain,
+        "-r", resolvers,
+        "-w", outfile
+    ])
+    msg = "puredns bruteforce is running"
+    return p, msg
 
-    proc = subprocess.Popen(
-        ["puredns", "bruteforce", wordlist, domain, "-r", str(resolvers)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True
-    )
-
-    msg = "puredns bruteforce running"
-    return proc, msg
 
 
 def collect_results(proc, msg, outfile, tmp=None):

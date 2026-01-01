@@ -1,3 +1,5 @@
+![img](https://github.com/it-sim0n/AutoDNS/blob/main/AutoDNS.jpg?raw=true)
+
 # AutoDNS
 
 AutoDNS is a portable DNS automation wrapper around **puredns**, designed for efficient and repeatable subdomain enumeration during reconnaissance and bug bounty workflows.

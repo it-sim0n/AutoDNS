@@ -24,7 +24,6 @@ def main():
             path,
             dynamic=(itype == "2")
         )
-
         collect_results(p, msg, out, tmp)
 
     elif action == "2":

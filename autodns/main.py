@@ -1,37 +1,29 @@
-from .banner import show_banner
-from .runner import resolve, bruteforce, collect_results
+from autodns.core import bruteforce, resolve, wait_with_spinner
+from pathlib import Path
+
 
 def main():
-    show_banner()
+    print_banner()
 
-    print("Please select the action you want to perform:")
-    print("1) Resolve subdomains from an existing list")
-    print("2) Bruteforce subdomains using a wordlist")
-    action = input("> ").strip()
-
+    choice = input("> ").strip()
     domain = input("Please enter the target domain: ").strip()
-    out = f"{domain}_pure.txt"
+    resolvers = Path.home() / ".resolvers"
 
-    if action == "1":
-        path = input("Please provide the path to the subdomain list file: ").strip()
-        print("Please specify the input type you want to use:")
-        print("1) Use a plain subdomain list")
-        print("2) Generate permutations dynamically using dnsgen")
-        itype = input("> ").strip()
+    if choice == "1":
+        path = input("Please provide the path to the subdomain list: ").strip()
+        outfile = f"{domain}_resolved.txt"
 
-        p, msg, tmp = resolve(
-            domain,
-            path,
-            dynamic=(itype == "2")
-        )
-        collect_results(p, msg, out, tmp)
+        p, msg = resolve(domain, path, resolvers)
+        wait_with_spinner(p, msg)
 
-    elif action == "2":
+        Path(outfile).write_text(p.stdout.read())
+        print(f"[+] Results have been saved to: {outfile}")
+
+    elif choice == "2":
         wl = input("Please provide the path to the wordlist file: ").strip()
-        p, msg = bruteforce(domain, wl)
-        collect_results(p, msg, out)
+        outfile = f"{domain}_pure.txt"
 
-    else:
-        raise SystemExit("Invalid action selected.")
+        p, msg = bruteforce(domain, wl, resolvers, outfile)
+        wait_with_spinner(p, msg)
 
-    print(f"[+] Results have been saved to: {out}")
+        print(f"[+] Results have been saved to: {outfile}")

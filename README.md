@@ -106,5 +106,4 @@ Designed for Linux-based reconnaissance environments.
 Intended for security research and authorized testing only.
 
 # Author 
-SIMON# AutoDNS
-# AutoDNS
+SIMON

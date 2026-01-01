@@ -1,55 +1,59 @@
 from pathlib import Path
 from threading import Thread
-from .utils import run, spinner
+import subprocess
+
+from .utils import spinner
 from .resolvers import create_resolvers_file
 
-TMP_DNSGEN = Path("/tmp/autodns_dnsgen.txt")
 
 def resolve(domain, sublist, dynamic=False):
     resolvers = create_resolvers_file()
     tmp = None
 
     if dynamic:
-        tmp = TMP_DNSGEN
+        tmp = Path("/tmp/autodns_dnsgen.txt")
 
-        # cat sub | dnsgen -f -
-        cat_proc = run(["cat", sublist])
-        dnsgen_proc = run(["dnsgen", "-f", "-"], stdin=cat_proc.stdout)
+        # دقیقاً همان دستور Bash با ورودی‌های کاربر
+        cmd = (
+            f'puredns resolve "$(cat {sublist} | dnsgen -f - > {tmp}; echo {tmp})" '
+            f'{domain} -r {resolvers}'
+        )
 
-        with tmp.open("w") as f:
-            f.write(dnsgen_proc.stdout.read())
+        proc = subprocess.Popen(
+            cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
 
-        dnsgen_proc.wait()
-        input_file = tmp
         msg = "dnsgen | puredns resolve running"
-    else:
-        input_file = sublist
-        msg = "puredns resolve running"
+        return proc, msg, tmp
 
-    p = run([
-        "puredns",
-        "resolve",
-        str(input_file),
-        domain,
-        "-r",
-        str(resolvers)
-    ])
+    # ---------- static mode ----------
+    proc = subprocess.Popen(
+        ["puredns", "resolve", sublist, domain, "-r", str(resolvers)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True
+    )
 
-    return p, msg, tmp
+    msg = "puredns resolve running"
+    return proc, msg, None
 
 
 def bruteforce(domain, wordlist):
     resolvers = create_resolvers_file()
-    p = run([
-        "puredns",
-        "bruteforce",
-        wordlist,
-        domain,
-        "-r",
-        str(resolvers)
-    ])
+
+    proc = subprocess.Popen(
+        ["puredns", "bruteforce", wordlist, domain, "-r", str(resolvers)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True
+    )
+
     msg = "puredns bruteforce running"
-    return p, msg
+    return proc, msg
 
 
 def collect_results(proc, msg, outfile, tmp=None):

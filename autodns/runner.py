@@ -5,7 +5,7 @@ from .utils import run, spinner
 
 def resolve(domain, path, resolvers, dynamic=False):
     if dynamic:
-        dnsgen = run(["dnsgen", path])
+        dnsgen = run(["dnsgen -f -", path])
         p = run(
             ["puredns", "resolve", "/dev/stdin", domain, "-r", resolvers],
             stdin=dnsgen.stdout

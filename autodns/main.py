@@ -1,29 +1,33 @@
-from autodns.core import bruteforce, resolve, wait_with_spinner
 from pathlib import Path
+from threading import Thread
+from .utils import run, spinner
 
 
-def main():
-    print_banner()
+def resolve(domain, path, resolvers):
+    p = run([
+        "puredns", "resolve",
+        path, domain,
+        "-r", resolvers
+    ])
+    msg = "puredns resolve is running"
+    return p, msg
 
-    choice = input("> ").strip()
-    domain = input("Please enter the target domain: ").strip()
-    resolvers = Path.home() / ".resolvers"
 
-    if choice == "1":
-        path = input("Please provide the path to the subdomain list: ").strip()
-        outfile = f"{domain}_resolved.txt"
+def bruteforce(domain, wordlist, resolvers, outfile):
+    p = run([
+        "puredns", "bruteforce",
+        wordlist, domain,
+        "-r", resolvers,
+        "--wildcard-tests", "5",
+        "--rate-limit", "1000",
+        "-w", outfile
+    ])
+    msg = "puredns bruteforce is running"
+    return p, msg
 
-        p, msg = resolve(domain, path, resolvers)
-        wait_with_spinner(p, msg)
 
-        Path(outfile).write_text(p.stdout.read())
-        print(f"[+] Results have been saved to: {outfile}")
-
-    elif choice == "2":
-        wl = input("Please provide the path to the wordlist file: ").strip()
-        outfile = f"{domain}_pure.txt"
-
-        p, msg = bruteforce(domain, wl, resolvers, outfile)
-        wait_with_spinner(p, msg)
-
-        print(f"[+] Results have been saved to: {outfile}")
+def wait_with_spinner(proc, msg):
+    t = Thread(target=spinner, args=(proc, msg))
+    t.start()
+    proc.wait()
+    t.join()

@@ -7,13 +7,19 @@ from .resolvers import create_resolvers_file
 
 
 def resolve(domain, sublist, dynamic=False):
+    """
+    Static:
+      puredns resolve sublist domain -r resolvers
+
+    Dynamic (EXACT bash behavior):
+      puredns resolve "$(cat sublist | dnsgen -f - > tmp; echo tmp)" domain -r resolvers
+    """
     resolvers = create_resolvers_file()
     tmp = None
 
     if dynamic:
         tmp = Path("/tmp/autodns_dnsgen.txt")
 
-        # دقیقاً همان دستور Bash با ورودی‌های کاربر
         cmd = (
             f'puredns resolve "$(cat {sublist} | dnsgen -f - > {tmp}; echo {tmp})" '
             f'{domain} -r {resolvers}'
@@ -30,7 +36,7 @@ def resolve(domain, sublist, dynamic=False):
         msg = "dnsgen | puredns resolve running"
         return proc, msg, tmp
 
-    # ---------- static mode ----------
+    # -------- static mode --------
     proc = subprocess.Popen(
         ["puredns", "resolve", sublist, domain, "-r", str(resolvers)],
         stdout=subprocess.PIPE,
@@ -42,16 +48,21 @@ def resolve(domain, sublist, dynamic=False):
     return proc, msg, None
 
 
-def bruteforce(domain, wordlist, resolvers, outfile):
-    p = run([
-        "puredns", "bruteforce",
-        wordlist, domain,
-        "-r", resolvers,
-        "-w", outfile
-    ])
-    msg = "puredns bruteforce is running"
-    return p, msg
+def bruteforce(domain, wordlist):
+    """
+    puredns bruteforce wordlist domain -r resolvers
+    """
+    resolvers = create_resolvers_file()
 
+    proc = subprocess.Popen(
+        ["puredns", "bruteforce", wordlist, domain, "-r", str(resolvers)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True
+    )
+
+    msg = "puredns bruteforce running"
+    return proc, msg
 
 
 def collect_results(proc, msg, outfile, tmp=None):
